@@ -12,4 +12,4 @@ Used :-
       
 •   Here server and client both are connected asynchronously with Socketio, for Real Time exprience.
 
-![output image](image.png)
+![output image](https://github.com/sudhir002/FaceAPI-Django/blob/master/image.PNG)
