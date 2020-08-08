@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    {% load static %}
+    <script src="{% static "/js/webcam.js" %}" type="text/javascript"> </script>
+    <script src="{% static "/js/socket.js" %}" type="text/javascript"> </script>
+
+    <style>
+        body {
+            font-family:tahoma;
+            text-align:center;
+        }
+        #my_camera  {
+            position:relative;
+            border:2px solid #000;
+        }
+        #my_camera div {
+            display:none;
+            position: absolute;
+            left: 0;
+            border: 4px solid #0bff0b;
+            top:0;
+            width: 100px;
+            height: 100px;
+        }
+        .camera-box {
+            display:flex;
+            justify-content: center;
+        }
+        .details {
+            padding:15px;
+            width:450px;
+            color:#43d413;
+            background: #191818;
+            text-align: left;
+        }
+        .details p {
+            padding:0 20px;
+            color:#43d413;
+            margin:0;
+            font-size:13px;
+            text-align: left;
+        }
+        .details label {
+            color:red;
+        }
+    </style>
+</head>
+<body>
+<h1>The Video</h1>
+<div class="camera-box">
+    <div id="my_camera">
+        <div class="face-frame"></div>
+    </div>
+    <div class="details">
+        <h3>face_info</h3>
+        {<br />
+        <p>angle_of_the_jaw : <label id="angle_of_the_jaw"></label></p>
+        <p>faceShape : <label id="faceShape"></label></p>
+        <p>face_length : <label id="face_length"></label></p>
+         <p>face_width : <label id="face_width"></label></p>
+        <p>fitment_length : <label id="fitment_length"></label></p>
+        <p>forehead_length : <label id="forehead_length"></label></p>
+        <p>jaw_line_length : <label id="jaw_line_length"></label></p>
+        <p>ovalsimilarity : <label id="ovalsimilarity"></label></p>
+         <p>similarity : <label id="similarity"></label></p>
+        <p>recomendation : <label id="recomendation"></label></p>
+        <p>eye_distance : <label id="eye_distance"></label></p>
+        }
+    </div>
+</div>
+<div id="results" ></div>
+<script language="JavaScript">
+let socket = io.connect("http://localhost:8000/");
+{#socket.on('connect', (data) => {#}
+{#    console.log("Connected with SocketIO :) ");});#}
+
+function isOpen(ws) {
+    return ws.readyState === ws.OPEN
+}
+let imgSrc;
+
+Webcam.set({
+    width: 450,
+    height: 340,
+    image_format: 'jpeg',
+    jpeg_quality: 90
+});
+Webcam.attach('#my_camera');
+setInterval(function() {
+    take_snapshot();
+}, 10);
+
+function take_snapshot() {
+    Webcam.snap(function(data_uri) {
+        document.getElementById('results').innerHTML =
+            '<img src="' + data_uri + '" style="display:none;"/>';
+        imgSrc = document.getElementsByTagName('img')[0].getAttribute("src");
+        socket.on('connect', (data) => {
+            console.log("Connected with SocketIO :) ");
+            socket.emit("input", imgSrc);
+        });
+    });
+}
+
+function findProp(obj, key, out) {
+    var i,
+        proto = Object.prototype,
+        ts = proto.toString,
+        hasOwn = proto.hasOwnProperty.bind(obj);
+
+    if ('[object Array]' !== ts.call(out)) out = [];
+
+    for (i in obj) {
+        if (hasOwn(i)) {
+            if (i === key) {
+                out.push(obj[i]);
+            } else if ('[object Array]' === ts.call(obj[i]) || '[object Object]' === ts.call(obj[i])) {
+                findProp(obj[i], key, out);
+            }
+        }
+    }
+    return out;
+}
+socket.on("result", (data) => {
+    console.log(data)
+    let noOfFaces = (findProp(data, "NoOfFaces"))[0];
+    let h = (findProp(data, "h"))[0];
+    let w = (findProp(data, "w"))[0];
+    let x = (findProp(data, "x"))[0];
+    let y = (findProp(data, "y"))[0];
+    console.log("face dimension- ", x, y, w, h);
+    document.getElementById("my_camera").children[0].id = "frame";
+    if (noOfFaces != 0) {
+        document.getElementById("angle_of_the_jaw").innerText = findProp(data, "angle_of_the_jaw")[0];
+        document.getElementById("faceShape").innerText = findProp(data, "faceShape")[0];
+        document.getElementById("face_length").innerText = findProp(data, "face_length")[0];
+        document.getElementById("face_width").innerText = findProp(data, "face_width")[0];
+        document.getElementById("fitment_length").innerText = findProp(data, "fitment_length")[0];
+        document.getElementById("jaw_line_length").innerText = findProp(data, "jaw_line_length")[0];
+        document.getElementById("similarity").innerText = findProp(data, "similarity")[0];
+        document.getElementById("ovalsimilarity").innerText = findProp(data, "ovalsimilarity")[0];
+        document.getElementById("eye_distance").innerText = findProp(data, "eye_distance")[0];
+        document.getElementById("recomendation").innerText = findProp(data, "recomendation");
+        document.getElementById("forehead_length").innerText = findProp(data, "forehead_length");
+        document.getElementById("my_camera").children[0].style.display = "block";
+        document.getElementById("my_camera").children[0].style.width = w + "px";
+        document.getElementById("my_camera").children[0].style.height = h + "px";
+        document.getElementById("my_camera").children[0].style.top = y + "px";
+        document.getElementById("my_camera").children[0].style.left = x + "px";
+    } else {
+        document.getElementById("my_camera").children[0].style.display = "none";
+    }
+})
+</script>
+
+</body>
+</html>
