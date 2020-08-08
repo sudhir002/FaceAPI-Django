@@ -10,6 +10,6 @@ Used :-
       DLIB,
       Opencv.
       
-•   Here server and client both are connected asynchronously with Socketio, for Real Time exprience.
+•   Here server and client both are connected asynchronously with SocketIO, for Real Time exprience.
 
 ![output image](https://github.com/sudhir002/FaceAPI-Django/blob/master/image.PNG)
